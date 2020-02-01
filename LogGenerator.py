@@ -1,4 +1,3 @@
-# from datetime import datetime
 import csv
 import time
 from threading import Lock, Thread

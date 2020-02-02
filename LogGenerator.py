@@ -47,6 +47,8 @@ class LogGenerator(Thread):
 
         self.csv_start_date = csv_start_date
 
+        self.simul_start_time = time.time()
+
         self.buffer = []
         print("ok")
 
@@ -71,13 +73,16 @@ class LogGenerator(Thread):
         self.is_running = False
         self.run_lock.release()
 
+    def get_offset_ms(self):
+        return self.csv_start_date - self.simul_start_time
+
     def run(self):
         print("go")
         self.is_running = True
 
         if self.csv_start_date is not None:
             for log in self.stream:
-                if log["date"] >= start_date:
+                if log["date"] >= self.csv_start_date:
                     self.buffer_lock.acquire()
                     self.buffer.append(log)
                     self.buffer_lock.release()
@@ -90,7 +95,7 @@ class LogGenerator(Thread):
                 self.buffer_lock.release()
                 break
 
-        simul_start_time = time.time()
+        self.simul_start_time = time.time()
 
         stop = False
 
@@ -105,7 +110,7 @@ class LogGenerator(Thread):
                     break
                 self.run_lock.release()
 
-                ellapsed_time = time.time() - simul_start_time
+                ellapsed_time = time.time() - self.simul_start_time
                 next_event = log["date"] - self.csv_start_date
 
                 if ellapsed_time < next_event:

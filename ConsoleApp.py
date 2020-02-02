@@ -3,8 +3,8 @@ import os
 import time
 from collections import deque
 from threading import Lock, Thread
-from analyser import compute_stats
 
+from log_analyse_fcts import compute_stats
 from LogGenerator import LogGenerator
 
 

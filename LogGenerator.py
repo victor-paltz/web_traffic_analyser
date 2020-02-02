@@ -12,10 +12,16 @@ class LogGenerator(Thread):
     def __init__(self, src_file, csv_start_date=None):
         Thread.__init__(self)
 
+        # create a reader object on the input file.
         data = csv.reader(open(src_file), delimiter=',',
                           quoting=csv.QUOTE_NONNUMERIC)
-        header = next(data)
 
+        # store the header of the csv file.
+        header = next(data)
+        assert tuple(header) == ('remotehost', 'rfc931',
+                                 'authuser', 'date', 'request', 'status', 'bytes')
+
+        # Define Deserializers objects that transform any line of the csv into the right object.
         request_deserializer = Deserializer(deserialize_dict={"method": str,
                                                               "route": str,
                                                               "protocol": str},
@@ -23,7 +29,6 @@ class LogGenerator(Thread):
                                                 "method", "route", "protocol"],
                                             split=True,
                                             default_sep=" ")
-
         transform_dict_log_line = {"authuser": str,
                                    "rfc931": str,
                                    "status": int,
@@ -32,30 +37,36 @@ class LogGenerator(Thread):
                                    "bytes": int,
                                    "date": int
                                    }
-
         log_deserializer = Deserializer(deserialize_dict=transform_dict_log_line,
                                         default_header=header,
                                         split=False)
 
+        # Instanciate a generator that converts on the fly the csv lines into dictionary objects.
         self.stream = (log_deserializer(log_line) for log_line in data)
 
-        self.generator_start_date = time.time()
-        self.is_running = False
-
+        # Instanciates Lock object to concurently access to variables.
         self.buffer_lock = Lock()
         self.run_lock = Lock()
 
+        # Variable to handle the simulation.
+        self.is_running = False
         self.csv_start_date = csv_start_date
-
         self.simul_start_time = time.time()
 
+        # List that stores the lines already read.
         self.buffer = []
-        print("ok")
-
-    def pause(self):
-        pass
 
     def empty_buffer(self):
+        """
+        Function that empty the buffer and returns its content.
+
+        Returns
+        -------
+        buffer : list of dict
+            All the elements of the buffer (the requests that
+            the machine received since the last flush of the buffer)
+        """
+
         self.buffer_lock.acquire()
         buff = self.buffer.copy()
         self.buffer = []
@@ -63,17 +74,40 @@ class LogGenerator(Thread):
         return buff
 
     def get_buffer(self):
+        """
+        Function that returns the content of the buffer without flushing it.
+
+        Returns
+        -------
+        buffer : list of dict
+            All the elements of the buffer (the requests that
+            the machine received since the last flush of the buffer)
+        """
+
         self.buffer_lock.acquire()
         buff = self.buffer.copy()
         self.buffer_lock.release()
         return buff
 
     def stop(self):
+        """
+        Function to stop the Log generator.
+        """
+
         self.run_lock.acquire()
         self.is_running = False
         self.run_lock.release()
 
     def get_offset_ms(self):
+        """
+        Function that returns the offset between the simulation start time and the csv-based time.
+
+        Returns
+        -------
+        delta_time : int
+            Number of seconds between the simulation start time and the csv-based time
+        """
+        
         return self.csv_start_date - self.simul_start_time
 
     def run(self):

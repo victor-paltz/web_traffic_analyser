@@ -91,7 +91,6 @@ class ConsoleApp(Thread):
             report += self.avg_total_traffic_report
             report += "\n"
             report += self.alert_report
-            report += "\n"
 
             os.system('clear')
             print(report)

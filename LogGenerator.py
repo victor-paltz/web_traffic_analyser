@@ -2,9 +2,7 @@ import csv
 import time
 from threading import Lock, Thread
 
-import numpy as np
-
-from .Deserializer import Deserializer
+from Deserializer import Deserializer
 
 filename = "sample_csv.txt"
 

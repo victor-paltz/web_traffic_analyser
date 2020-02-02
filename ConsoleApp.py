@@ -25,10 +25,13 @@ class ConsoleApp(Thread):
 
         self.sections_stats_report = ""
         self.avg_total_traffic_report = ""
-        self.alert_report = ""
+        self.alert_report = "List of alerts:\n"
 
         self.print_thread = Thread(target=self.print_reports)
         self.updater_thread = Thread(target=self.updater)
+
+        self.alert = False
+        self.alert_start_time = 0
 
     def run(self):
         self.print_thread.start()
@@ -37,8 +40,8 @@ class ConsoleApp(Thread):
 
     def updater(self):
 
-        last_total_requests_update = time.time()
-        last_stats_update = time.time()
+        last_total_requests_update = time.time()-1
+        last_stats_update = time.time()-10
 
         nb_logs = 0
 
@@ -82,13 +85,16 @@ class ConsoleApp(Thread):
 
             total_update = f" (last update: {format_time(time.time()+self.stream.get_offset_ms())})"
 
+            report = f"HTTP log monitoring console program {total_update}\n\n"
+            report += self.sections_stats_report
+            report += "\n"
+            report += self.avg_total_traffic_report
+            report += "\n"
+            report += self.alert_report
+            report += "\n"
+
             os.system('clear')
-            print("HTTP log monitoring console program")
-            print()
-            print(self.sections_stats_report)
-            print(self.avg_total_traffic_report)
-            print(self.alert_report)
-            print(total_update)
+            print(report)
 
             time.sleep(0.5)
 
@@ -99,12 +105,25 @@ class ConsoleApp(Thread):
         self.sliding_requests_number.append(nb_logs)
         self.total_traffic_120 += nb_logs
 
-        report = f"Average total taffic: {self.total_traffic_120/120:.2f} req/s over 2min-sliding window"
+        avg_total_traffic = self.total_traffic_120/120
+
+        report = f"Average total taffic: {avg_total_traffic:.2f} req/s over 2min-sliding window"
         if True:
             report += f" (last update: {format_time(time.time()+self.stream.get_offset_ms())})"
 
         report += "\n"
         self.avg_total_traffic_report = report
+
+        if self.alert:
+            if avg_total_traffic < self.avg_trafic_threshold:
+                self.alert = False
+                self.alert_report += f"End of alert"
+                self.alert_report += f", recovered at time {format_time(time.time()+self.stream.get_offset_ms())}\n"
+        else:
+            if avg_total_traffic >= self.avg_trafic_threshold:
+                self.alert = True
+                self.alert_report += f"/!\ High traffic generated an alert - hits {avg_total_traffic:.2f} req/s, "
+                self.alert_report += f"triggered at time {format_time(time.time()+self.stream.get_offset_ms())}\n"
 
     def update_sections_stats(self, verbose=False):
 
@@ -144,11 +163,10 @@ class ConsoleApp(Thread):
 
 def format_time(nb_sec):
     time_string = time.strftime("%m/%d/%Y, %H:%M:%S", time.localtime(nb_sec))
-    return f"{time_string}.{int((nb_sec-int(nb_sec))*100):02d})"
+    return f"{time_string}.{int((nb_sec-int(nb_sec))*100):02d}"
 
 
 if __name__ == "__main__":
 
     app = ConsoleApp("sample_csv.txt")
-
     app.start()

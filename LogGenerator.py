@@ -4,8 +4,6 @@ from threading import Lock, Thread
 
 from Deserializer import Deserializer
 
-filename = "sample_csv.txt"
-
 
 class LogGenerator(Thread):
     """
@@ -61,7 +59,7 @@ class LogGenerator(Thread):
         # Instanciate a generator that converts on the fly the csv lines into dictionary objects.
         self.stream = (log_deserializer(log_line) for log_line in data)
 
-        # Instanciates Lock object to concurently access to variables.
+        # Instanciate Lock object to concurently access to variables.
         self.buffer_lock = Lock()
         self.run_lock = Lock()
 
@@ -192,6 +190,7 @@ class LogGenerator(Thread):
 
 if __name__ == "__main__":
 
+    filename = "sample_csv.txt"
     lg = LogGenerator(filename, csv_start_date=None)
 
     lg.start()

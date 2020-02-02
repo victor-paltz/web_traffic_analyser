@@ -3,7 +3,7 @@
 class Deserializer:
     """
     Deserializer class
-    Defines a process to transform a string (or a list of sting) into a dictionary.
+    Defines a process to transform a string (or a list of stings) into a dictionary.
 
     The string contains elements separated by a separator character, each of these elements
     are casted to the right type and stored in a dictionary.
@@ -37,7 +37,7 @@ class Deserializer:
 
     def deserialize(self, line, header=None, sep=None):
         """
-        Function to deserialize a string (or a list of string) into a dictionary.
+        Function to deserialize a string (or a list of strings) into a dictionary.
 
         Parameters
         ----------
@@ -67,5 +67,5 @@ class Deserializer:
                 line = line.split(sep)
             else:
                 line = line.split(self.default_sep)
-                
+
         return {key: self.deserialize_dict[key](val) for key, val in zip(header, line)}

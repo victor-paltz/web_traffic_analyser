@@ -8,8 +8,25 @@ filename = "sample_csv.txt"
 
 
 class LogGenerator(Thread):
+    """
+    Class that defines a log generator.
+
+    When the thread starts, the instanciated LogGenerator object
+    is going to fill in real time a buffer of logs following
+    the log history file given in input.
+
+    """
 
     def __init__(self, src_file, csv_start_date=None):
+        """
+        Parameters
+        ----------
+            src_file : str
+                path to the csv file containing the logs.
+            csv_start_date : int 
+                timestamp in seconds from where to start the log generation.
+        """
+
         Thread.__init__(self)
 
         # create a reader object on the input file.
@@ -107,13 +124,20 @@ class LogGenerator(Thread):
         delta_time : int
             Number of seconds between the simulation start time and the csv-based time
         """
-        
+
         return self.csv_start_date - self.simul_start_time
 
     def run(self):
-        print("go")
-        self.is_running = True
+        """
+        Run the simulation by appending to the buffer the logs as if they were coming in real time.
+        """
 
+        # set the running flag to True
+        self.run_lock.acquire()
+        self.is_running = True
+        self.run_lock.release()
+
+        # Find the right index in the csv to start the simulation from the given start date.
         if self.csv_start_date is not None:
             for log in self.stream:
                 if log["date"] >= self.csv_start_date:
@@ -129,14 +153,18 @@ class LogGenerator(Thread):
                 self.buffer_lock.release()
                 break
 
+        # save simulation start date
         self.simul_start_time = time.time()
 
         stop = False
 
+        # While the process should run
         while not stop:
 
+            # iterate over the stream
             for log in self.stream:
 
+                # Check that the process shouldn't stop
                 self.run_lock.acquire()
                 if not self.is_running:
                     self.run_lock.release()
@@ -144,17 +172,22 @@ class LogGenerator(Thread):
                     break
                 self.run_lock.release()
 
+                # compute the time to wait before adding the log to the buffer
                 ellapsed_time = time.time() - self.simul_start_time
                 next_event = log["date"] - self.csv_start_date
 
-                if ellapsed_time < next_event:
-                    time.sleep(next_event-ellapsed_time)
+                # Wait the right amount of time
+                while ellapsed_time < next_event:
+                    time.sleep(max(next_event-ellapsed_time-.1, .01))
+                    ellapsed_time = time.time() - self.simul_start_time
 
+                # Add the log in the buffer
                 self.buffer_lock.acquire()
                 self.buffer.append(log)
                 self.buffer_lock.release()
 
-        print("end")
+        # print end message
+        print("End of the simulation")
 
 
 if __name__ == "__main__":

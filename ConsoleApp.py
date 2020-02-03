@@ -77,9 +77,9 @@ class ConsoleApp:
         self.stream.stop()
         self.run_printing = False
         self.run_updater = False
-        self.stream.join()
         self.print_thread.join()
         self.updater_thread.join()
+        self.stream.join()
 
     def updater(self):
         """
@@ -266,9 +266,9 @@ class ConsoleApp:
 
 if __name__ == "__main__":
 
-    app = ConsoleApp("data/sample_csv.txt")
+    app = ConsoleApp("data/sample_csv.txt", csv_start_date=0)
     app.start()
 
-    time.sleep(100)
+    time.sleep(10)
 
     app.stop()

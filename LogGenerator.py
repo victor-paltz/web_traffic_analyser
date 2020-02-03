@@ -21,7 +21,7 @@ class LogGenerator(Thread):
         ----------
         src_file : str
             path to the csv file containing the logs.
-        csv_start_date : int 
+        csv_start_date : float 
             timestamp in seconds from where to start the log generation.
         """
 
@@ -156,41 +156,49 @@ class LogGenerator(Thread):
 
         stop = False
 
-        # While the process should run
-        while not stop:
+        # iterate over the stream
+        for log in self.stream:
 
-            # iterate over the stream
-            for log in self.stream:
+            # compute the time to wait before adding the log to the buffer
+            ellapsed_time = time.time() - self.simul_start_time
+            next_event = log["date"] - self.csv_start_date
+
+            # If the waiting time is too long, stop the program
+            if next_event-ellapsed_time > 10000:
+                stop = True
+                break
+
+            # Wait the right amount of time
+            while ellapsed_time < next_event:
 
                 # Check that the process shouldn't stop
                 self.run_lock.acquire()
                 if not self.is_running:
-                    self.run_lock.release()
                     stop = True
                     break
                 self.run_lock.release()
 
-                # compute the time to wait before adding the log to the buffer
+                # wait a little time
+                time.sleep(.01)
+
+                # update ellapsed time
                 ellapsed_time = time.time() - self.simul_start_time
-                next_event = log["date"] - self.csv_start_date
+            
+            # If the program should stop
+            if stop:
+                break
 
-                # Wait the right amount of time
-                while ellapsed_time < next_event:
-                    time.sleep(max(next_event-ellapsed_time-.1, .01))
-                    ellapsed_time = time.time() - self.simul_start_time
+            # Add the log in the buffer
+            self.buffer_lock.acquire()
+            self.buffer.append(log)
+            self.buffer_lock.release()
 
-                # Add the log in the buffer
-                self.buffer_lock.acquire()
-                self.buffer.append(log)
-                self.buffer_lock.release()
-
-        # print end message
-        print("End of the simulation")
+        # No more requests, end of the simulation
 
 
 if __name__ == "__main__":
 
-    filename = "sample_csv.txt"
+    filename = "data/sample_csv.txt"
     lg = LogGenerator(filename, csv_start_date=None)
 
     lg.start()

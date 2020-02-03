@@ -8,6 +8,15 @@ from LogGenerator import LogGenerator
 
 
 def create_test_csv(path):
+    """
+    create a dummy csv file to test the program
+
+    Parameters
+    ----------
+    path : string
+        Path where to store the csv file containing the fake logs.
+    """
+
     first_part = '"10.0.0.2","-","apache",'
     second_part = ',"GET /api/user HTTP/1.0",200,1234\n'
 
@@ -35,17 +44,19 @@ def test_alert():
 
         assert len(console_app.alert_list) == 1
         assert not console_app.alert_list[0].resolved
-        assert abs(console_app.alert_list[0].start_time - 80) <= 1
+        assert abs(console_app.alert_list[0].start_time - 80) <= 1.5
 
         time.sleep(40)
 
         assert len(console_app.alert_list) == 1
         assert console_app.alert_list[0].resolved
-        assert abs(console_app.alert_list[0].end_time - 120) <= 1
+        assert abs(console_app.alert_list[0].end_time - 120) <= 1.5
 
     except AssertionError as err:
         console_app.stop()
         raise AssertionError(err)
+    else:
+        console_app.stop()
 
 
 if __name__ == "__main__":

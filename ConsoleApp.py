@@ -6,6 +6,8 @@ from threading import Lock, Thread
 
 from log_analyse_fcts import compute_stats
 from LogGenerator import LogGenerator
+from utils import format_time
+from Alert import Alert
 
 
 class ConsoleApp(Thread):
@@ -13,7 +15,7 @@ class ConsoleApp(Thread):
     Class that describes a console application for our project.
     """
 
-    def __init__(self, src_file, avg_trafic_threshold=10):
+    def __init__(self, src_file, avg_trafic_threshold=10, csv_start_date=1549573860):
         """
         Parameters
         ----------
@@ -31,7 +33,7 @@ class ConsoleApp(Thread):
         self.avg_trafic_threshold = avg_trafic_threshold
 
         # Log generator object
-        self.stream = LogGenerator(src_file, csv_start_date=1549573860)
+        self.stream = LogGenerator(src_file, csv_start_date=csv_start_date)
 
         # buffer that contains the logs not already processed
         self.buffer = []
@@ -45,7 +47,7 @@ class ConsoleApp(Thread):
         # Variable that contains the reports to show on the console
         self.sections_stats_report = ""
         self.avg_total_traffic_report = ""
-        self.alert_report = "List of alerts:\n"
+        self.alert_report = ""
 
         # We define a thread to update the screen of the console app
         self.print_thread = Thread(target=self.print_reports)
@@ -56,11 +58,15 @@ class ConsoleApp(Thread):
         # Variables for alerts
         self.alert = False
         self.alert_start_time = 0
+        self.alert_list = []
 
     def run(self):
         self.print_thread.start()
         self.updater_thread.start()
         self.stream.start()
+
+    def stop(self):
+        self.stream.stop()
 
     def updater(self):
 
@@ -86,7 +92,7 @@ class ConsoleApp(Thread):
             if time.time() - next_total_requests_update >= request_period:
 
                 # update avg traffic value
-                self.update_total_request(nb_logs)
+                self.update_total_request_report(nb_logs)
 
                 # reset nb_logs
                 nb_logs = 0
@@ -98,7 +104,7 @@ class ConsoleApp(Thread):
             if time.time() - next_stats_update >= stats_period:
 
                 # update the sections' report
-                self.update_sections_stats()
+                self.update_sections_stats_report()
 
                 # mark the update date
                 next_stats_update += stats_period
@@ -109,6 +115,8 @@ class ConsoleApp(Thread):
         """
         function to update the console with the reports every 0.5 seconds
         """
+
+        self.update_alert_report()
 
         while True:
 
@@ -128,7 +136,7 @@ class ConsoleApp(Thread):
             # wait some time
             time.sleep(0.5)
 
-    def update_total_request(self, nb_logs):
+    def update_total_request_report(self, nb_logs):
 
         if len(self.sliding_requests_number) == 120:
             self.total_traffic_120 -= self.sliding_requests_number.popleft()
@@ -147,15 +155,17 @@ class ConsoleApp(Thread):
         if self.alert:
             if avg_total_traffic < self.avg_trafic_threshold:
                 self.alert = False
-                self.alert_report += f"End of alert"
-                self.alert_report += f", recovered at time {format_time(time.time()+self.stream.get_offset_ms())}\n"
+                alert_time = time.time() + self.stream.get_offset_ms()
+                self.alert_list[-1].resolve(alert_time)
+                self.update_alert_report()
         else:
             if avg_total_traffic >= self.avg_trafic_threshold:
                 self.alert = True
-                self.alert_report += f"/!\ High traffic generated an alert - hits {avg_total_traffic:.2f} req/s, "
-                self.alert_report += f"triggered at time {format_time(time.time()+self.stream.get_offset_ms())}\n"
+                alert_time = time.time() + self.stream.get_offset_ms()
+                self.alert_list.append(Alert(alert_time, avg_total_traffic))
+                self.update_alert_report()
 
-    def update_sections_stats(self, verbose=False):
+    def update_sections_stats_report(self, verbose=False):
 
         total, stats = compute_stats(self.buffer)
 
@@ -190,24 +200,18 @@ class ConsoleApp(Thread):
 
         self.sections_stats_report = report
 
+    def update_alert_report(self):
 
-def format_time(nb_sec):
-    """
-    Function to format a number of seconds into a string
+        if not self.alert_list:
+            self.alert_report =  "No alert triggered"
+            return
 
-    Parameters
-    ----------
-    nb_sec : float
-        Number of seconds.
+        report = "List of alerts:\n"
 
-    Returns
-    -------
-    output : string
-        formated time with millisecond precision
-    """
-    
-    time_string = time.strftime("%m/%d/%Y, %H:%M:%S", time.localtime(nb_sec))
-    return f"{time_string}.{int((nb_sec-int(nb_sec))*100):02d}"
+        for alert in self.alert_list:
+            report += alert.report()
+
+        self.alert_report = report
 
 
 if __name__ == "__main__":

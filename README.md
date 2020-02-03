@@ -54,5 +54,6 @@ There are still many improvement that could be done for this project:
 - Improving the design of the app (using colors)
 - Handling more edge case in the program (checking that the inputs are in the good format)
 - Creating more general classes for the objects in order to reuse the code
-- Controling the smulation time speed to run faster tests
+- Controling the simulation time speed in order to run faster tests
+- Drawing a traffic curve in real time and a threshold line
 - ...

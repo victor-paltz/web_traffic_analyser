@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("--src_path", type=str, default="sample_csv.txt",
                     help="path to the CSV-encoded HTTP access log")
 
-parser.add_argument("--avg_trafic_threshold", type=int, default=10,
+parser.add_argument("--avg_trafic_threshold", type=float, default=10,
                     help="average traffic threshold to trigger alerts (in requests per second)")
 
 args = parser.parse_args()

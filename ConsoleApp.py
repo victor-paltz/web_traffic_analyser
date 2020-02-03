@@ -4,10 +4,10 @@ import time
 from collections import deque
 from threading import Lock, Thread
 
+from Alert import Alert
 from log_analyse_fcts import compute_stats
 from LogGenerator import LogGenerator
 from utils import format_time
-from Alert import Alert
 
 
 class ConsoleApp:
@@ -82,9 +82,13 @@ class ConsoleApp:
         self.updater_thread.join()
 
     def updater(self):
+        """
+        Function that triggers update events in the right time
+        and retrieves logs from buffer.
+        """
 
-        stats_period = 10
-        request_period = 1
+        stats_period = 10  # seconds
+        request_period = 1  # second
 
         next_total_requests_update = time.time()-request_period
         next_stats_update = time.time()-stats_period
@@ -125,7 +129,7 @@ class ConsoleApp:
 
     def print_reports(self):
         """
-        function to update the console with the reports every 0.5 seconds
+        Function that updates the console with the reports every 0.5 seconds
         """
 
         self.update_alert_report()
@@ -149,28 +153,42 @@ class ConsoleApp:
             time.sleep(0.5)
 
     def update_total_request_report(self, nb_logs):
+        """
+        Function that computes the report for the average total traffic.
+        The function manage also alerts if any.
 
+        Parameters
+        ----------
+        nb_logs : int
+            number of new logs that appeared since last update
+        """
+
+        # update the total traffic using a fixed size queue
         if len(self.sliding_requests_number) == 120:
             self.total_traffic_120 -= self.sliding_requests_number.popleft()
         self.sliding_requests_number.append(nb_logs)
         self.total_traffic_120 += nb_logs
 
+        # compute the average traffic
         avg_total_traffic = self.total_traffic_120/120
 
+        # create report and update traffic report
         report = f"Average total taffic: {avg_total_traffic:.2f} req/s over 2min-sliding window"
         if True:
             report += f" (last update: {format_time(time.time()+self.stream.get_offset_ms())})"
-
         report += "\n"
         self.avg_total_traffic_report = report
 
+        # Handle alerts
         if self.alert:
+            # resolve alert if the condition is satisfied
             if avg_total_traffic < self.avg_trafic_threshold:
                 self.alert = False
                 alert_time = time.time() + self.stream.get_offset_ms()
                 self.alert_list[-1].resolve(alert_time)
                 self.update_alert_report()
         else:
+            # trigger and alert if the threshold was exceeded
             if avg_total_traffic >= self.avg_trafic_threshold:
                 self.alert = True
                 alert_time = time.time() + self.stream.get_offset_ms()
@@ -178,22 +196,34 @@ class ConsoleApp:
                 self.update_alert_report()
 
     def update_sections_stats_report(self, verbose=False):
+        """
+        Function that updates the report that deals with statistics
+        every 10 seconds and about each sections.
 
+        Parameters
+        ----------
+        verbose : bool
+            Define the level of detail of the stats, default to False (low level of details)
+        """
+
+        # compute stats
         total, stats = compute_stats(self.buffer)
 
         self.buffer = []
 
+        # sort sections by number of requests
         infos = sorted(((stats[st]["nb_requests"], st, stats[st])
                         for st in stats), reverse=True)
 
+        # create a report
         report = f"Top {3} websites:"
         if True:
             report += f" (last update: {format_time(time.time()+self.stream.get_offset_ms())})"
-
         report += "\n"
 
         nb_requests = 0
 
+        # for each section, format stats and append it to the report
         for i, (count_req, section, section_stats) in enumerate(infos):
 
             nb_requests = section_stats["nb_requests"]
@@ -210,19 +240,27 @@ class ConsoleApp:
                 report += f", errors: {nb_404+nb_500} (404: {nb_404}, 500: {nb_500})"
             report += "\n"
 
+        # finally update the section report
         self.sections_stats_report = report
 
     def update_alert_report(self):
+        """
+        Function that update the alert report
+        """
 
+        # custom report if no alert ever triggered
         if not self.alert_list:
             self.alert_report = "No alert triggered"
             return
 
+        # create the report
         report = "List of alerts:\n"
 
+        # add a description line for each alert
         for alert in self.alert_list:
             report += alert.report()
 
+        # finally update the alert report
         self.alert_report = report
 
 

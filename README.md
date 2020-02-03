@@ -56,4 +56,5 @@ There are still many improvement that could be done for this project:
 - Creating more general classes for the objects in order to reuse the code
 - Controling the simulation time speed in order to run faster tests
 - Drawing a traffic curve in real time and a threshold line
+- Modifying the code to make each thread less inter-dependant
 - ...

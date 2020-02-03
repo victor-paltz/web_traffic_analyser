@@ -19,10 +19,10 @@ class LogGenerator(Thread):
         """
         Parameters
         ----------
-            src_file : str
-                path to the csv file containing the logs.
-            csv_start_date : int 
-                timestamp in seconds from where to start the log generation.
+        src_file : str
+            path to the csv file containing the logs.
+        csv_start_date : int 
+            timestamp in seconds from where to start the log generation.
         """
 
         Thread.__init__(self)

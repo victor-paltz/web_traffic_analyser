@@ -266,9 +266,8 @@ class ConsoleApp:
 
 if __name__ == "__main__":
 
+    # Small test
     app = ConsoleApp("data/sample_csv.txt", csv_start_date=0)
     app.start()
-
     time.sleep(10)
-
     app.stop()

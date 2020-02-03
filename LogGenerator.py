@@ -198,23 +198,14 @@ class LogGenerator(Thread):
 
 if __name__ == "__main__":
 
+    # Small test
     filename = "data/sample_csv.txt"
     lg = LogGenerator(filename, csv_start_date=None)
 
     lg.start()
-
     time.sleep(3)
-
     print(len(lg.empty_buffer()))
     print(len(lg.empty_buffer()))
-
     time.sleep(1)
-
     print(len(lg.empty_buffer()))
-
-    time.sleep(2)
-
-    print(len(lg.empty_buffer()))
-    print(len(lg.empty_buffer()))
-
     lg.stop()

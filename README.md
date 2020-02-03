@@ -12,7 +12,7 @@ There are several parts in the project:
 
 ## Installation
 
-Use the package manager [pip3](https://pip.pypa.io/en/stable/) to install the dependencies.
+You should use the package manager [pip3](https://pip.pypa.io/en/stable/) to install the dependencies.
 There is only one dependency which is "pytest", we could have chosen unittest to remain independant from third-party libraries.
 
 ```bash
@@ -43,6 +43,7 @@ The test are a bit long because the sliding window that we use to compute the av
 ├── Alert.py            -> class storing Alert objects
 ├── ConsoleApp.py       -> class defining our console application
 ├── Deserializer.py     -> class defining deserializer (convert string to dict)
+├── Docs                -> folder that contains a sphinx generated documentation
 ├── LogGenerator.py     -> class defining a log generator besed on a csv logs file
 ├── README.md
 ├── data                -> folder containing data for test and simulation

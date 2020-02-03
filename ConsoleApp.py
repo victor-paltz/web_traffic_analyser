@@ -269,6 +269,6 @@ if __name__ == "__main__":
     app = ConsoleApp("data/sample_csv.txt")
     app.start()
 
-    time.sleep(15)
+    time.sleep(100)
 
     app.stop()

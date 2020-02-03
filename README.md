@@ -8,7 +8,7 @@ There are several parts in the project:
 - A generator of logs that reads a csv file and fills a buffer with requests, following the csv file history.
 - A console program that reads incoming logs and do some statistics:
     - Computing the average traffic on a sliding window of 2 minutes and raising alerts if it exceeds a threashold.
-    - Computing statistics on the requests every 10 seconds
+    - Computing statistics on the requests every 10 seconds.
 
 ## Installation
 

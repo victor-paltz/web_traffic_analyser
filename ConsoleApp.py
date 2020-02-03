@@ -51,9 +51,11 @@ class ConsoleApp(Thread):
 
         # We define a thread to update the screen of the console app
         self.print_thread = Thread(target=self.print_reports)
+        self.run_printing = True
 
         # We define a thread to retrive the new logs and process them
         self.updater_thread = Thread(target=self.updater)
+        self.run_updater = True
 
         # Variables for alerts
         self.alert = False
@@ -67,6 +69,11 @@ class ConsoleApp(Thread):
 
     def stop(self):
         self.stream.stop()
+        self.run_printing = False
+        self.run_updater = False
+        self.stream.join()
+        self.print_thread.join()
+        self.updater_thread.join()
 
     def updater(self):
 
@@ -78,7 +85,7 @@ class ConsoleApp(Thread):
 
         nb_logs = 0
 
-        while True:
+        while self.run_updater:
 
             # get new logs
             new_logs = self.stream.empty_buffer()
@@ -118,7 +125,7 @@ class ConsoleApp(Thread):
 
         self.update_alert_report()
 
-        while True:
+        while self.run_printing:
 
             # prepare report
             total_update = f" (last update: {format_time(time.time()+self.stream.get_offset_ms())})"
@@ -216,5 +223,10 @@ class ConsoleApp(Thread):
 
 if __name__ == "__main__":
 
-    app = ConsoleApp("sample_csv.txt")
+    app = ConsoleApp("data/sample_csv.txt")
     app.start()
+
+    time.sleep(2)
+
+    app.stop()
+    app.join()

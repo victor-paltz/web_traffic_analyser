@@ -39,6 +39,7 @@ def test_alert():
     assert abs(console_app.alert_list[0].end_time - 120) <= 1
 
     console_app.stop()
+    console_app.join()
 
 
 if __name__ == "__main__":

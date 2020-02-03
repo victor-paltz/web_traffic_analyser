@@ -10,7 +10,7 @@ from utils import format_time
 from Alert import Alert
 
 
-class ConsoleApp(Thread):
+class ConsoleApp:
     """
     Class that describes a console application for our project.
     """
@@ -26,8 +26,6 @@ class ConsoleApp(Thread):
             If the average traffic on a slidding window of 2 minutes is above this
             threshold, an alert is triggered.
         """
-
-        Thread.__init__(self)
 
         # Threshold on the average traffic
         self.avg_trafic_threshold = avg_trafic_threshold
@@ -62,12 +60,20 @@ class ConsoleApp(Thread):
         self.alert_start_time = 0
         self.alert_list = []
 
-    def run(self):
+    def start(self):
+        """
+        Function to start all the threads
+        """
+
         self.print_thread.start()
         self.updater_thread.start()
         self.stream.start()
 
     def stop(self):
+        """
+        Function to stop the simulation
+        """
+
         self.stream.stop()
         self.run_printing = False
         self.run_updater = False
@@ -90,7 +96,6 @@ class ConsoleApp(Thread):
             # get new logs
             new_logs = self.stream.empty_buffer()
             nb_logs += len(new_logs)
-            #print(f"nb_log {nb_logs}")
 
             # store logs in buffer
             self.buffer.extend(new_logs)
@@ -210,7 +215,7 @@ class ConsoleApp(Thread):
     def update_alert_report(self):
 
         if not self.alert_list:
-            self.alert_report =  "No alert triggered"
+            self.alert_report = "No alert triggered"
             return
 
         report = "List of alerts:\n"
@@ -226,7 +231,6 @@ if __name__ == "__main__":
     app = ConsoleApp("data/sample_csv.txt")
     app.start()
 
-    time.sleep(2)
+    time.sleep(15)
 
     app.stop()
-    app.join()

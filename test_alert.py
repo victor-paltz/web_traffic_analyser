@@ -1,4 +1,7 @@
 
+import time
+
+import pytest
 
 from ConsoleApp import ConsoleApp
 from LogGenerator import LogGenerator
@@ -22,24 +25,27 @@ def test_alert():
 
     create_test_csv(test_path)
 
-    console_app = ConsoleApp(test_path, avg_trafic_threshold=10, csv_start_date=0)
+    console_app = ConsoleApp(
+        test_path, avg_trafic_threshold=10, csv_start_date=0)
 
     console_app.start()
 
-    time.sleep(90)
+    try:
+        time.sleep(90)
 
-    assert len(console_app.alert_list) == 1
-    assert not console_app.alert_list[0].resolved
-    assert abs(console_app.alert_list[0].start_time - 80) <= 1
+        assert len(console_app.alert_list) == 1
+        assert not console_app.alert_list[0].resolved
+        assert abs(console_app.alert_list[0].start_time - 80) <= 1
 
-    time.sleep(40)
+        time.sleep(40)
 
-    assert len(console_app.alert_list) == 1
-    assert console_app.alert_list[0].resolved
-    assert abs(console_app.alert_list[0].end_time - 120) <= 1
+        assert len(console_app.alert_list) == 1
+        assert console_app.alert_list[0].resolved
+        assert abs(console_app.alert_list[0].end_time - 120) <= 1
 
-    console_app.stop()
-    console_app.join()
+    except AssertionError as err:
+        console_app.stop()
+        raise AssertionError(err)
 
 
 if __name__ == "__main__":

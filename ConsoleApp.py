@@ -9,27 +9,51 @@ from LogGenerator import LogGenerator
 
 
 class ConsoleApp(Thread):
+    """
+    Class that describes a console application for our project.
+    """
 
-    def __init__(self, src_file, avg_trafic_threshold=10, refreshing_time=10):
+    def __init__(self, src_file, avg_trafic_threshold=10):
+        """
+        Parameters
+        ----------
+        src_file : string
+            Path to the csv file containing the logs.
+        avg_trafic_threshold : int 
+            Average traffic threshold to trigger alerts (in requests per second).
+            If the average traffic on a slidding window of 2 minutes is above this
+            threshold, an alert is triggered.
+        """
+
         Thread.__init__(self)
 
+        # Threshold on the average traffic
         self.avg_trafic_threshold = avg_trafic_threshold
-        self.refreshing_time = refreshing_time
 
+        # Log generator object
         self.stream = LogGenerator(src_file, csv_start_date=1549573860)
 
+        # buffer that contains the logs not already processed
         self.buffer = []
 
+        # variable that stores the total number of requests
+        # on a sliding window of 2 minutes.
         self.total_traffic_120 = 0
+        # we store the number of requests of each second in a fixed sized queue.
         self.sliding_requests_number = deque([], 120)
 
+        # Variable that contains the reports to show on the console
         self.sections_stats_report = ""
         self.avg_total_traffic_report = ""
         self.alert_report = "List of alerts:\n"
 
+        # We define a thread to update the screen of the console app
         self.print_thread = Thread(target=self.print_reports)
+
+        # We define a thread to retrive the new logs and process them
         self.updater_thread = Thread(target=self.updater)
 
+        # Variables for alerts
         self.alert = False
         self.alert_start_time = 0
 
@@ -40,8 +64,11 @@ class ConsoleApp(Thread):
 
     def updater(self):
 
-        last_total_requests_update = time.time()-1
-        last_stats_update = time.time()-10
+        stats_period = 10
+        request_period = 1
+
+        next_total_requests_update = time.time()-request_period
+        next_stats_update = time.time()-stats_period
 
         nb_logs = 0
 
@@ -56,9 +83,7 @@ class ConsoleApp(Thread):
             self.buffer.extend(new_logs)
 
             # trigger nb request update every 1s
-            if time.time() - last_total_requests_update >= 1:
-
-                #print(time.time() - last_total_requests_update)
+            if time.time() - next_total_requests_update >= request_period:
 
                 # update avg traffic value
                 self.update_total_request(nb_logs)
@@ -67,24 +92,28 @@ class ConsoleApp(Thread):
                 nb_logs = 0
 
                 # mark the update date
-                last_total_requests_update += 1
+                next_total_requests_update += request_period
 
             # trigger stats computation every 10s
-            if time.time() - last_stats_update >= 10:
+            if time.time() - next_stats_update >= stats_period:
 
                 # update the sections' report
                 self.update_sections_stats()
 
                 # mark the update date
-                last_stats_update += 10
+                next_stats_update += stats_period
 
             time.sleep(0.1)
 
     def print_reports(self):
+        """
+        function to update the console with the reports every 0.5 seconds
+        """
+
         while True:
 
+            # prepare report
             total_update = f" (last update: {format_time(time.time()+self.stream.get_offset_ms())})"
-
             report = f"HTTP log monitoring console program {total_update}\n\n"
             report += self.sections_stats_report
             report += "\n"
@@ -92,9 +121,11 @@ class ConsoleApp(Thread):
             report += "\n"
             report += self.alert_report
 
+            # print report
             os.system('clear')
             print(report)
 
+            # wait some time
             time.sleep(0.5)
 
     def update_total_request(self, nb_logs):
@@ -161,6 +192,20 @@ class ConsoleApp(Thread):
 
 
 def format_time(nb_sec):
+    """
+    Function to format a number of seconds into a string
+
+    Parameters
+    ----------
+    nb_sec : float
+        Number of seconds.
+
+    Returns
+    -------
+    output : string
+        formated time with millisecond precision
+    """
+    
     time_string = time.strftime("%m/%d/%Y, %H:%M:%S", time.localtime(nb_sec))
     return f"{time_string}.{int((nb_sec-int(nb_sec))*100):02d}"
 

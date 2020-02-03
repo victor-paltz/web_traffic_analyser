@@ -13,11 +13,14 @@ parser = argparse.ArgumentParser(
 parser.add_argument("--src_path", type=str, default="sample_csv.txt",
                     help="path to the CSV-encoded HTTP access log")
 
+parser.add_argument("--avg_trafic_threshold", type=int, default=10,
+                    help="average traffic threshold to trigger alerts (in requests per second)")
+
 args = parser.parse_args()
 
 
 # Instanciate the app and the simulation
-app = ConsoleApp(args.src_path)
+app = ConsoleApp(args.src_path, args.avg_trafic_threshold)
 
 
 # Print project name in ASCII

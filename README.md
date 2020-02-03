@@ -30,6 +30,14 @@ You can use the flag -h for help.
 
 Once it's done, just press any key to start the monitoring app.
 
+## Test
+
+In order to run the test, run the following command:
+```bash
+pytest 
+```
+The test are a bit long because the sliding window that we use to compute the average traffic is of 2 minutes.
+
 ## Files
 ```
 ├── Alert.py            -> class storing Alert objects
